@@ -2,8 +2,14 @@ package main
 
 import (
   "fmt"
+  "log"
+  "net/http"
 )
 
 func main() {
-  fmt.Println("goserve")
+  fs := http.FileServer(http.Dir("."))
+  http.Handle("/", fs)
+
+  fmt.Println("Server running on port 8080")
+  log.Fatal(http.ListenAndServe(":8080", nil))
 }
