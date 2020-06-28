@@ -4,12 +4,20 @@ import (
   "fmt"
   "log"
   "net/http"
+
+  flag "github.com/spf13/pflag"
 )
 
 func main() {
-  fs := http.FileServer(http.Dir("."))
+  port := flag.StringP("port", "p", "8080", "Port to serve on")
+  flag.Parse()
+
+  arguments := flag.Args()
+	directory := arguments[0]
+  
+  fs := http.FileServer(http.Dir(directory))
   http.Handle("/", fs)
 
-  fmt.Println("Server running on port 8080")
-  log.Fatal(http.ListenAndServe(":8080", nil))
+  fmt.Printf("Serving %s on port %s \n", directory, *port)
+  log.Fatal(http.ListenAndServe("localhost:" + *port, nil))
 }
