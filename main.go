@@ -31,7 +31,11 @@ func main() {
   flag.Parse()
 
   arguments := flag.Args()
-  directory := arguments[0]
+
+  directory := "."
+  if (len(arguments) != 0) {
+    directory = arguments[0]
+  }
   
   fs := http.FileServer(Dir{http.Dir(directory)})
   http.Handle("/", fs)
