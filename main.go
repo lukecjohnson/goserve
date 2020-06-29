@@ -25,6 +25,9 @@ func (d Dir) Open(name string) (http.File, error) {
 
 func main() {
   port := flag.StringP("port", "p", "8080", "Port to serve on")
+  cert := flag.StringP("cert", "c", "", "Path to SSL certificate")
+  key := flag.StringP("key", "k", "", "Path to the SSL certificate's private key")
+
   flag.Parse()
 
   arguments := flag.Args()
@@ -34,5 +37,10 @@ func main() {
   http.Handle("/", fs)
 
   fmt.Printf("Serving %s on port %s \n", directory, *port)
-  log.Fatal(http.ListenAndServe("localhost:" + *port, nil))
+
+  if (*cert != "" && *key != "") {
+    log.Fatal(http.ListenAndServeTLS("localhost:" + *port, *cert, *key, nil))
+  } else {
+    log.Fatal(http.ListenAndServe("localhost:" + *port, nil))
+  }
 }
