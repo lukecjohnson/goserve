@@ -9,6 +9,8 @@ import (
   flag "github.com/spf13/pflag"
 )
 
+var Version = "DEV" // Dynamically set at build time to most recent git tag
+
 type Dir struct {
   http.Dir
 }
@@ -27,8 +29,14 @@ func main() {
   port := flag.StringP("port", "p", "8080", "Port to serve on")
   cert := flag.StringP("cert", "c", "", "Path to SSL certificate")
   key := flag.StringP("key", "k", "", "Path to the SSL certificate's private key")
+  version := flag.BoolP("version", "v", false, "Prints the current version of goserve")
 
   flag.Parse()
+
+  if *version {
+    fmt.Println(Version)
+    os.Exit(0)
+  }
 
   arguments := flag.Args()
 
