@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
+	"path"
 	"runtime"
 
 	flag "github.com/spf13/pflag"
@@ -21,7 +22,7 @@ type dir struct {
 
 func (d dir) Open(name string) (http.File, error) {
 	f, err := d.Dir.Open(name)
-	if os.IsNotExist(err) {
+	if path.Ext(name) == "" && os.IsNotExist(err) {
 		if f, err := d.Dir.Open(name + ".html"); err == nil {
 			return f, nil
 		}
