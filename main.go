@@ -1,58 +1,59 @@
 package main
 
 import (
-  "fmt"
-  "log"
-  "net/http"
-  "os"
+	"fmt"
+	"log"
+	"net/http"
+	"os"
 
-  flag "github.com/spf13/pflag"
+	flag "github.com/spf13/pflag"
 )
 
-var Version = "DEV" // Dynamically set at build time to most recent git tag
+// Version : Dynamically set at build time to most recent git tag
+var Version = "DEV"
 
-type Dir struct {
-  http.Dir
+type dir struct {
+	http.Dir
 }
 
-func (d Dir) Open(name string) (http.File, error) {
-  f, err := d.Dir.Open(name)
-  if os.IsNotExist(err) {
-    if f, err := d.Dir.Open(name + ".html"); err == nil {
-      return f, nil
-    }
-  }
-  return f, err
+func (d dir) Open(name string) (http.File, error) {
+	f, err := d.Dir.Open(name)
+	if os.IsNotExist(err) {
+		if f, err := d.Dir.Open(name + ".html"); err == nil {
+			return f, nil
+		}
+	}
+	return f, err
 }
 
 func main() {
-  port := flag.StringP("port", "p", "8080", "Port to serve on")
-  cert := flag.StringP("cert", "c", "", "Path to SSL certificate")
-  key := flag.StringP("key", "k", "", "Path to the SSL certificate's private key")
-  version := flag.BoolP("version", "v", false, "Prints the current version of goserve")
+	port := flag.StringP("port", "p", "8080", "Port to serve on")
+	cert := flag.StringP("cert", "c", "", "Path to SSL certificate")
+	key := flag.StringP("key", "k", "", "Path to the SSL certificate's private key")
+	version := flag.BoolP("version", "v", false, "Prints the current version of goserve")
 
-  flag.Parse()
+	flag.Parse()
 
-  if *version {
-    fmt.Println(Version)
-    os.Exit(0)
-  }
+	if *version {
+		fmt.Println(Version)
+		os.Exit(0)
+	}
 
-  arguments := flag.Args()
+	arguments := flag.Args()
 
-  directory := "."
-  if (len(arguments) != 0) {
-    directory = arguments[0]
-  }
-  
-  fs := http.FileServer(Dir{http.Dir(directory)})
-  http.Handle("/", fs)
+	directory := "."
+	if len(arguments) != 0 {
+		directory = arguments[0]
+	}
 
-  fmt.Printf("Serving %s on port %s \n", directory, *port)
+	fs := http.FileServer(dir{http.Dir(directory)})
+	http.Handle("/", fs)
 
-  if (*cert != "" && *key != "") {
-    log.Fatal(http.ListenAndServeTLS("localhost:" + *port, *cert, *key, nil))
-  } else {
-    log.Fatal(http.ListenAndServe("localhost:" + *port, nil))
-  }
+	fmt.Printf("Serving %s on port %s \n", directory, *port)
+
+	if *cert != "" && *key != "" {
+		log.Fatal(http.ListenAndServeTLS("localhost:"+*port, *cert, *key, nil))
+	} else {
+		log.Fatal(http.ListenAndServe("localhost:"+*port, nil))
+	}
 }
