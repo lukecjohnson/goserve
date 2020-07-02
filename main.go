@@ -21,6 +21,7 @@ func main() {
 	host := flag.StringP("host", "h", "localhost", "Hostname to serve on")
 	cert := flag.StringP("cert", "c", "", "Path to SSL certificate")
 	key := flag.StringP("key", "k", "", "Path to the SSL certificate's private key")
+	single := flag.BoolP("single", "s", false, "Serve as single page application")
 	open := flag.BoolP("open", "o", false, "Open browser window")
 	version := flag.BoolP("version", "v", false, "Prints the current version of goserve")
 
@@ -58,8 +59,12 @@ func main() {
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		if path.Ext(r.URL.Path) == "" {
-			if _, err := os.Stat(directory + r.URL.Path); os.IsNotExist(err) {
-				r.URL.Path += ".html"
+			if *single {
+				r.URL.Path = "/"
+			} else {
+				if _, err := os.Stat(directory + r.URL.Path); os.IsNotExist(err) {
+					r.URL.Path += ".html"
+				}
 			}
 		}
 
