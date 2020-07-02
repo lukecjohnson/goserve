@@ -16,20 +16,6 @@ import (
 // Version : Dynamically set at build time to most recent git tag
 var Version = "DEV"
 
-type dir struct {
-	http.Dir
-}
-
-func (d dir) Open(name string) (http.File, error) {
-	f, err := d.Dir.Open(name)
-	if path.Ext(name) == "" && os.IsNotExist(err) {
-		if f, err := d.Dir.Open(name + ".html"); err == nil {
-			return f, nil
-		}
-	}
-	return f, err
-}
-
 func openBrowser(url string) error {
 	var cmd string
 	var args []string
@@ -71,9 +57,6 @@ func main() {
 		directory = arguments[0]
 	}
 
-	fs := http.FileServer(dir{http.Dir(directory)})
-	http.Handle("/", fs)
-
 	secure := *cert != "" && *key != ""
 
 	url := "http://localhost:" + *port
@@ -87,6 +70,18 @@ func main() {
 			os.Exit(1)
 		}
 	}
+
+	fs := http.FileServer(http.Dir(directory))
+
+	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		if path.Ext(r.URL.Path) == "" {
+			if _, err := os.Stat(directory + r.URL.Path); os.IsNotExist(err) {
+				r.URL.Path += ".html"
+			}
+		}
+
+		fs.ServeHTTP(w, r)
+	})
 
 	fmt.Printf("Serving %s at %s \n", directory, url)
 
