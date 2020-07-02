@@ -16,39 +16,15 @@ import (
 // Version : Dynamically set at build time to most recent git tag
 var Version = "DEV"
 
-func openBrowser(url string) error {
-	var cmd string
-	var args []string
-
-	if runtime.GOOS == "darwin" {
-		cmd = "open"
-	} else if runtime.GOOS == "windows" {
-		cmd = "cmd"
-		args = []string{"/c", "start"}
-	} else if runtime.GOOS == "linux" {
-		cmd = "xdg-open"
-	} else {
-		return errors.New("Error: Unsupported platform")
-	}
-
-	args = append(args, url)
-
-	return exec.Command(cmd, args...).Start()
-}
-
 func main() {
 	port := flag.StringP("port", "p", "8080", "Port to serve on")
+	host := flag.StringP("host", "h", "localhost", "Hostname to serve on")
 	cert := flag.StringP("cert", "c", "", "Path to SSL certificate")
 	key := flag.StringP("key", "k", "", "Path to the SSL certificate's private key")
 	open := flag.BoolP("open", "o", false, "Open browser window")
 	version := flag.BoolP("version", "v", false, "Prints the current version of goserve")
 
 	flag.Parse()
-
-	if *version {
-		fmt.Println(Version)
-		os.Exit(0)
-	}
 
 	arguments := flag.Args()
 
@@ -59,9 +35,16 @@ func main() {
 
 	secure := *cert != "" && *key != ""
 
-	url := "http://localhost:" + *port
+	address := *host + ":" + *port
+
+	url := "http://" + address
 	if secure {
-		url = "https://localhost:" + *port
+		url = "https://" + address
+	}
+
+	if *version {
+		fmt.Println(Version)
+		os.Exit(0)
 	}
 
 	if *open {
@@ -86,8 +69,28 @@ func main() {
 	fmt.Printf("Serving %s at %s \n", directory, url)
 
 	if secure {
-		log.Fatal(http.ListenAndServeTLS("localhost:"+*port, *cert, *key, nil))
+		log.Fatal(http.ListenAndServeTLS(address, *cert, *key, nil))
 	} else {
-		log.Fatal(http.ListenAndServe("localhost:"+*port, nil))
+		log.Fatal(http.ListenAndServe(address, nil))
 	}
+}
+
+func openBrowser(url string) error {
+	var cmd string
+	var args []string
+
+	if runtime.GOOS == "darwin" {
+		cmd = "open"
+	} else if runtime.GOOS == "windows" {
+		cmd = "cmd"
+		args = []string{"/c", "start"}
+	} else if runtime.GOOS == "linux" {
+		cmd = "xdg-open"
+	} else {
+		return errors.New("Error: Unsupported platform")
+	}
+
+	args = append(args, url)
+
+	return exec.Command(cmd, args...).Start()
 }
