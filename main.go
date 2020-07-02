@@ -22,6 +22,7 @@ func main() {
 	cert := flag.StringP("cert", "c", "", "Path to SSL certificate")
 	key := flag.StringP("key", "k", "", "Path to the SSL certificate's private key")
 	single := flag.BoolP("single", "s", false, "Serve as single page application")
+	cors := flag.BoolP("cors", "C", false, "Sets \"Access-Control-Allow-Origin\" to \"*\"")
 	open := flag.BoolP("open", "o", false, "Open browser window")
 	version := flag.BoolP("version", "v", false, "Prints the current version of goserve")
 
@@ -58,6 +59,10 @@ func main() {
 	fs := http.FileServer(http.Dir(directory))
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		if *cors {
+			w.Header().Set("Access-Control-Allow-Origin", "*")
+		}
+
 		if path.Ext(r.URL.Path) == "" {
 			if *single {
 				r.URL.Path = "/"
