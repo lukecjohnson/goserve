@@ -26,6 +26,20 @@ func main() {
 	open := flag.BoolP("open", "o", false, "Open browser window")
 	version := flag.BoolP("version", "v", false, "Prints the current version of goserve")
 
+	flag.Usage = func() {
+		flag.CommandLine.SortFlags = false
+
+		fmt.Printf("\n%s\n\n", "Usage:")
+		fmt.Println("  goserve [directory] [options]")
+
+		fmt.Printf("\n\n%s\n\n", "Options:")
+		flag.VisitAll(func(f *flag.Flag) {
+			fmt.Printf("  -%s, --%s\t\t%s\n\n", f.Shorthand, f.Name, f.Usage)
+		})
+
+		os.Exit(0)
+	}
+
 	flag.Parse()
 
 	arguments := flag.Args()
