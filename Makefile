@@ -1,6 +1,6 @@
 VERSION := $(shell git describe --tags --abbrev=0 2>/dev/null)
 
-all: build-all package-all
+all: build-all package-all checksums
 
 build-all:
 	rm -rf build
@@ -14,3 +14,6 @@ package-all:
 	tar -czf dist/goserve-$(VERSION)-macos-64.tar.gz LICENSE -C build/goserve-macos-64 .
 	tar -czf dist/goserve-$(VERSION)-windows-64.tar.gz LICENSE -C build/goserve-windows-64 .
 	tar -czf dist/goserve-$(VERSION)-linux-64.tar.gz LICENSE -C build/goserve-linux-64 .
+
+checksums:
+	cd dist && shasum -a 256 * > goserve-$(VERSION)-checksums.txt
