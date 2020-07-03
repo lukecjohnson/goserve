@@ -21,8 +21,9 @@ func main() {
 	host := flag.StringP("host", "h", "localhost", "Hostname to bind (Default: localhost)")
 	cert := flag.StringP("cert", "c", "", "Path to SSL certificate")
 	key := flag.StringP("key", "k", "", "Path to the SSL certificate's private key")
-	single := flag.BoolP("single", "s", false, "Serve as single page application")
+	maxAge := flag.StringP("max-age", "m", "", "Set the max age for resources in seconds (Cache-Control: max-age=<seconds>)")
 	cors := flag.BoolP("cors", "C", false, "Enable CORS (Access-Control-Allow-Origin: *)")
+	single := flag.BoolP("single", "s", false, "Serve as single page application")
 	open := flag.BoolP("open", "o", false, "Open browser window")
 	version := flag.BoolP("version", "v", false, "Display the current version of goserve")
 
@@ -75,6 +76,12 @@ func main() {
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		if *cors {
 			w.Header().Set("Access-Control-Allow-Origin", "*")
+		}
+
+		if *maxAge != "" {
+			w.Header().Set("Cache-Control", "max-age="+*maxAge)
+		} else {
+			w.Header().Set("Cache-Control", "no-store")
 		}
 
 		if path.Ext(r.URL.Path) == "" {
