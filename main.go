@@ -17,14 +17,14 @@ import (
 var Version = "DEV"
 
 func main() {
-	port := flag.StringP("port", "p", "8080", "Port to serve on")
-	host := flag.StringP("host", "h", "localhost", "Hostname to serve on")
+	port := flag.StringP("port", "p", "8080", "Port to bind (Default: 8080)")
+	host := flag.StringP("host", "h", "localhost", "Hostname to bind (Default: localhost)")
 	cert := flag.StringP("cert", "c", "", "Path to SSL certificate")
 	key := flag.StringP("key", "k", "", "Path to the SSL certificate's private key")
 	single := flag.BoolP("single", "s", false, "Serve as single page application")
-	cors := flag.BoolP("cors", "C", false, "Sets \"Access-Control-Allow-Origin\" to \"*\"")
+	cors := flag.BoolP("cors", "C", false, "Enable CORS (Access-Control-Allow-Origin: *)")
 	open := flag.BoolP("open", "o", false, "Open browser window")
-	version := flag.BoolP("version", "v", false, "Prints the current version of goserve")
+	version := flag.BoolP("version", "v", false, "Display the current version of goserve")
 
 	flag.Usage = func() {
 		flag.CommandLine.SortFlags = false
