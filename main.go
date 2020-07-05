@@ -1,7 +1,6 @@
 package main
 
 import (
-	"errors"
 	"fmt"
 	"log"
 	"net/http"
@@ -65,7 +64,24 @@ func main() {
 	}
 
 	if *open {
-		if err := openBrowser(url); err != nil {
+		var openBrowserCmd string
+		var openBrowserArgs []string
+
+		if runtime.GOOS == "darwin" {
+			openBrowserCmd = "open"
+		} else if runtime.GOOS == "windows" {
+			openBrowserCmd = "cmd"
+			openBrowserArgs = []string{"/c", "start"}
+		} else if runtime.GOOS == "linux" {
+			openBrowserCmd = "xdg-open"
+		} else {
+			fmt.Println("Error: Unsupported platform")
+			os.Exit(1)
+		}
+
+		openBrowserArgs = append(openBrowserArgs, url)
+
+		if err := exec.Command(openBrowserCmd, openBrowserArgs...).Start(); err != nil {
 			fmt.Println(err)
 			os.Exit(1)
 		}
@@ -104,24 +120,4 @@ func main() {
 	} else {
 		log.Fatal(http.ListenAndServe(address, nil))
 	}
-}
-
-func openBrowser(url string) error {
-	var cmd string
-	var args []string
-
-	if runtime.GOOS == "darwin" {
-		cmd = "open"
-	} else if runtime.GOOS == "windows" {
-		cmd = "cmd"
-		args = []string{"/c", "start"}
-	} else if runtime.GOOS == "linux" {
-		cmd = "xdg-open"
-	} else {
-		return errors.New("Error: Unsupported platform")
-	}
-
-	args = append(args, url)
-
-	return exec.Command(cmd, args...).Start()
 }
