@@ -68,13 +68,13 @@ func main() {
 		url = "https://" + addr
 	}
 
-	// Check for --version flag (print version and exit)
+	// Check for version flag (print version and exit)
 	if *version {
 		fmt.Println(currentVersion)
 		os.Exit(0)
 	}
 
-	// Check for --open flag (open browser window)
+	// Check for open flag (open browser window)
 	if *open {
 		if err := openBrowser(url); err != nil {
 			fmt.Println(err)
@@ -85,13 +85,14 @@ func main() {
 	// Wrap file server in handler with custom 404 handling
 	fs := wrapHandler(http.FileServer(http.Dir(dir)), dir)
 
+	// Register handler for all routes
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		// Check for --cors flag (set "Access-Control-Allow-Origin" header)
+		// Check for cors flag (set "Access-Control-Allow-Origin" header)
 		if *cors {
 			w.Header().Set("Access-Control-Allow-Origin", "*")
 		}
 
-		// Set "Cache-Control" header (defaults to "no-store" if --max-age option wasn't provided)
+		// Set "Cache-Control" header (defaults to "no-store" if max-age option wasn't provided)
 		if *maxAge != "" {
 			w.Header().Set("Cache-Control", "max-age="+*maxAge)
 		} else {
@@ -121,22 +122,29 @@ func main() {
 	}
 }
 
+// ResponseWriter wrapper
 type resourceNotFoundResponseWriter struct {
 	http.ResponseWriter
 	status int
 }
 
+// Wrapper for the WriteHeader method of the embedded ResponseWriter
 func (w *resourceNotFoundResponseWriter) WriteHeader(status int) {
 	w.status = status
+
+	// Write status unless status code is 404 - handle404 function will handle that
 	if status != http.StatusNotFound {
 		w.ResponseWriter.WriteHeader(status)
 	}
 }
 
+// Wrapper for the Write method of the embedded ResponseWriter
 func (w *resourceNotFoundResponseWriter) Write(p []byte) (int, error) {
+	// Write response unless status code is 404 - handle404 function will handle that
 	if w.status != http.StatusNotFound {
 		return w.ResponseWriter.Write(p)
 	}
+
 	return len(p), nil
 }
 
@@ -165,10 +173,10 @@ func handle404(w http.ResponseWriter, root string) {
 		}
 	}
 
-	// Set HTML content type
+	// Set "Content-Type" header for HTML response
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 
-	// Write 404 status
+	// Write header with 404 status code
 	w.WriteHeader(http.StatusNotFound)
 
 	// Write HTML response
