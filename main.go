@@ -27,14 +27,14 @@ func main() {
 	cors := flag.BoolP("cors", "C", false, "Enable CORS (Access-Control-Allow-Origin: *)")
 	single := flag.BoolP("single", "s", false, "Serve as single page application")
 	open := flag.BoolP("open", "o", false, "Open browser window")
-	version := flag.BoolP("version", "v", false, "Display the current version of goserve")
+	version := flag.BoolP("version", "v", false, "Display the current version of serve")
 
 	// Override default usage function
 	flag.Usage = func() {
 		flag.CommandLine.SortFlags = false
 
 		fmt.Printf("\n%s\n\n", "Usage:")
-		fmt.Println("  goserve [directory] [options]")
+		fmt.Println("  serve [directory] [options]")
 
 		fmt.Printf("\n\n%s\n\n", "Options:")
 		flag.VisitAll(func(f *flag.Flag) {

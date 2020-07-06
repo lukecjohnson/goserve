@@ -4,16 +4,16 @@ all: build-production package checksums
 
 build-production:
 	rm -rf build
-	GOOS=darwin GOARCH=amd64 go build -ldflags "-X main.currentVersion=$(VERSION) -s -w" -o build/goserve-macos-64/bin/goserve
-	GOOS=windows GOARCH=amd64 go build -ldflags "-X main.currentVersion=$(VERSION) -s -w" -o build/goserve-windows-64/bin/goserve.exe
-	GOOS=linux GOARCH=amd64 go build -ldflags "-X main.currentVersion=$(VERSION) -s -w" -o build/goserve-linux-64/bin/goserve
+	GOOS=darwin GOARCH=amd64 go build -ldflags "-X main.currentVersion=$(VERSION) -s -w" -o build/serve-macos-64/bin/serve
+	GOOS=windows GOARCH=amd64 go build -ldflags "-X main.currentVersion=$(VERSION) -s -w" -o build/serve-windows-64/bin/serve.exe
+	GOOS=linux GOARCH=amd64 go build -ldflags "-X main.currentVersion=$(VERSION) -s -w" -o build/serve-linux-64/bin/serve
 
 package:
 	rm -rf dist
 	mkdir dist
-	tar -czf dist/goserve-$(VERSION)-macos-64.tar.gz LICENSE -C build/goserve-macos-64 .
-	tar -czf dist/goserve-$(VERSION)-windows-64.tar.gz LICENSE -C build/goserve-windows-64 .
-	tar -czf dist/goserve-$(VERSION)-linux-64.tar.gz LICENSE -C build/goserve-linux-64 .
+	tar -czf dist/serve-$(VERSION)-macos-64.tar.gz LICENSE -C build/serve-macos-64 .
+	tar -czf dist/serve-$(VERSION)-windows-64.tar.gz LICENSE -C build/serve-windows-64 .
+	tar -czf dist/serve-$(VERSION)-linux-64.tar.gz LICENSE -C build/serve-linux-64 .
 
 checksums:
-	cd dist && shasum -a 256 * > goserve-$(VERSION)-checksums.txt
+	cd dist && shasum -a 256 * > serve-$(VERSION)-checksums.txt

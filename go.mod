@@ -1,4 +1,4 @@
-module github.com/lukecjohnson/goserve
+module github.com/lukecjohnson/serve
 
 go 1.14
 
