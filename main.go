@@ -13,10 +13,11 @@ import (
 	flag "github.com/spf13/pflag"
 )
 
-// Version : Dynamically set at build time to most recent git tag
-var Version = "DEV"
+// Dynamically set at build time to most recent git tag
+var currentVersion = "DEV"
 
 func main() {
+	// Command line flags
 	port := flag.StringP("port", "p", "8080", "Port to bind (Default: 8080)")
 	host := flag.StringP("host", "h", "localhost", "Hostname to bind (Default: localhost)")
 	cert := flag.StringP("cert", "c", "", "Path to SSL certificate")
@@ -27,6 +28,7 @@ func main() {
 	open := flag.BoolP("open", "o", false, "Open browser window")
 	version := flag.BoolP("version", "v", false, "Display the current version of goserve")
 
+	// Override default usage function
 	flag.Usage = func() {
 		flag.CommandLine.SortFlags = false
 
@@ -41,29 +43,37 @@ func main() {
 		os.Exit(0)
 	}
 
+	// Parse flags
 	flag.Parse()
 
-	arguments := flag.Args()
+	// Parse non-flag arguments
+	args := flag.Args()
 
-	directory := "."
-	if len(arguments) != 0 {
-		directory = arguments[0]
+	// Set directory to serve (defaults to current directory)
+	dir := "."
+	if len(args) != 0 {
+		dir = args[0]
 	}
 
+	// Check if both cert and key options were provided
 	secure := *cert != "" && *key != ""
 
-	address := *host + ":" + *port
+	// Set address (host + port)
+	addr := *host + ":" + *port
 
-	url := "http://" + address
+	// Set url (protocol + host + port)
+	url := "http://" + addr
 	if secure {
-		url = "https://" + address
+		url = "https://" + addr
 	}
 
+	// Check for --version flag
 	if *version {
-		fmt.Println(Version)
+		fmt.Println(currentVersion)
 		os.Exit(0)
 	}
 
+	// Check for --open flag
 	if *open {
 		var openBrowserCmd string
 		var openBrowserArgs []string
@@ -88,7 +98,8 @@ func main() {
 		}
 	}
 
-	fs := wrapHandler(http.FileServer(http.Dir(directory)), directory)
+	// Wrap file server in handler with custom 404 handling
+	fs := wrapHandler(http.FileServer(http.Dir(dir)), dir)
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		if *cors {
@@ -105,7 +116,7 @@ func main() {
 			if *single {
 				r.URL.Path = "/"
 			} else {
-				if _, err := os.Stat(directory + r.URL.Path); os.IsNotExist(err) {
+				if _, err := os.Stat(dir + r.URL.Path); os.IsNotExist(err) {
 					r.URL.Path += ".html"
 				}
 			}
@@ -114,12 +125,13 @@ func main() {
 		fs.ServeHTTP(w, r)
 	})
 
-	fmt.Printf("Serving %s at %s \n", directory, url)
+	fmt.Printf("Serving %s at %s \n", dir, url)
 
+	// Start server
 	if secure {
-		log.Fatal(http.ListenAndServeTLS(address, *cert, *key, nil))
+		log.Fatal(http.ListenAndServeTLS(addr, *cert, *key, nil))
 	} else {
-		log.Fatal(http.ListenAndServe(address, nil))
+		log.Fatal(http.ListenAndServe(addr, nil))
 	}
 }
 
