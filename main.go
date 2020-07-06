@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -49,7 +50,7 @@ func main() {
 	// Parse non-flag arguments
 	args := flag.Args()
 
-	// Set directory to serve (defaults to current directory)
+	// Set directory to serve (defaults to current directory if no argument was provided)
 	dir := "."
 	if len(args) != 0 {
 		dir = args[0]
@@ -67,32 +68,15 @@ func main() {
 		url = "https://" + addr
 	}
 
-	// Check for --version flag
+	// Check for --version flag (print version and exit)
 	if *version {
 		fmt.Println(currentVersion)
 		os.Exit(0)
 	}
 
-	// Check for --open flag
+	// Check for --open flag (open browser window)
 	if *open {
-		var openBrowserCmd string
-		var openBrowserArgs []string
-
-		if runtime.GOOS == "darwin" {
-			openBrowserCmd = "open"
-		} else if runtime.GOOS == "windows" {
-			openBrowserCmd = "cmd"
-			openBrowserArgs = []string{"/c", "start"}
-		} else if runtime.GOOS == "linux" {
-			openBrowserCmd = "xdg-open"
-		} else {
-			fmt.Println("Error: Unsupported platform")
-			os.Exit(1)
-		}
-
-		openBrowserArgs = append(openBrowserArgs, url)
-
-		if err := exec.Command(openBrowserCmd, openBrowserArgs...).Start(); err != nil {
+		if err := openBrowser(url); err != nil {
 			fmt.Println(err)
 			os.Exit(1)
 		}
@@ -102,10 +86,12 @@ func main() {
 	fs := wrapHandler(http.FileServer(http.Dir(dir)), dir)
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		// Check for --cors flag (set "Access-Control-Allow-Origin" header)
 		if *cors {
 			w.Header().Set("Access-Control-Allow-Origin", "*")
 		}
 
+		// Set "Cache-Control" header (defaults to "no-store" if --max-age option wasn't provided)
 		if *maxAge != "" {
 			w.Header().Set("Cache-Control", "max-age="+*maxAge)
 		} else {
@@ -167,8 +153,10 @@ func wrapHandler(h http.Handler, root string) http.HandlerFunc {
 }
 
 func handle404(w http.ResponseWriter, root string) {
+	// Set default response content
 	content := []byte(resourceNotFoundTemplate)
 
+	// Check if custom 404.html file exists
 	custom404Page := path.Join(root, "404.html")
 	if _, err := os.Stat(custom404Page); !os.IsNotExist(err) {
 		content, err = ioutil.ReadFile(custom404Page)
@@ -177,7 +165,35 @@ func handle404(w http.ResponseWriter, root string) {
 		}
 	}
 
+	// Set HTML content type
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+
+	// Write 404 status
 	w.WriteHeader(http.StatusNotFound)
+
+	// Write HTML response
 	w.Write(content)
+}
+
+func openBrowser(url string) error {
+	var cmd string
+	var args []string
+
+	// Set platform-specific command (w/ args) for opening a browser window
+	if runtime.GOOS == "darwin" {
+		cmd = "open"
+	} else if runtime.GOOS == "windows" {
+		cmd = "cmd"
+		args = []string{"/c", "start"}
+	} else if runtime.GOOS == "linux" {
+		cmd = "xdg-open"
+	} else {
+		return errors.New("Error: Unsupported platform")
+	}
+
+	// Add url as the last argument
+	args = append(args, url)
+
+	// Execute command
+	return exec.Command(cmd, args...).Start()
 }
