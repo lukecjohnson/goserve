@@ -51,10 +51,22 @@ func main() {
 	// Parse non-flag arguments
 	args := flag.Args()
 
+	// Check that no more than 1 argument was provided
+	if len(args) > 1 {
+		fmt.Println("Error: Please provide just one directory path")
+		os.Exit(1)
+	}
+
 	// Set directory to serve (defaults to current directory if no argument was provided)
 	dir := "."
 	if len(args) != 0 {
 		dir = args[0]
+
+		// Ensure that the provided directory exists
+		if _, err := os.Stat(dir); os.IsNotExist(err) {
+			fmt.Println("Error: The provided directory could not be found")
+			os.Exit(1)
+		}
 	}
 
 	// Check if both cert and key options were provided
