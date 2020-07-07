@@ -81,13 +81,13 @@ func main() {
 		url = "https://" + addr
 	}
 
-	// Check for version flag (print version and exit)
+	// Check for --version flag (print version and exit)
 	if *version {
 		fmt.Println(currentVersion)
 		os.Exit(0)
 	}
 
-	// Check for open flag (open browser window)
+	// Check for --open flag (open browser window)
 	if *open {
 		if err := openBrowser(url); err != nil {
 			fmt.Println(err)
@@ -95,7 +95,7 @@ func main() {
 		}
 	}
 
-	// Check for single flag and set the http.FileSystem root with the appropriate wrapper
+	// Check for --single flag and set the http.FileSystem root with the appropriate wrapper
 	var root http.FileSystem
 	if *single {
 		root = spaRoot{http.Dir(dir)}
@@ -104,11 +104,11 @@ func main() {
 	}
 
 	// Wrap file server in handler with custom 404 handling
-	fs := wrapHandler(http.FileServer(root), dir)
+	fs := notFoundHanlder(http.FileServer(root), dir)
 
-	// Register handler for all routes
+	// Register handler for all routes and add middleware for setting response headers
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		// Check for cors flag (set "Access-Control-Allow-Origin" header)
+		// Check for --cors flag (set "Access-Control-Allow-Origin" header)
 		if *cors {
 			w.Header().Set("Access-Control-Allow-Origin", "*")
 		}
@@ -120,6 +120,7 @@ func main() {
 			w.Header().Set("Cache-Control", "no-store")
 		}
 
+		// Pass control to next handler
 		fs.ServeHTTP(w, r)
 	})
 
@@ -140,7 +141,7 @@ type htmlRoot struct {
 
 // Wrapper for the Open method of htmlRoot's embedded http.Dir to handle clean urls
 func (d htmlRoot) Open(name string) (http.File, error) {
-	// Requested file
+	// Try opening requested file
 	f, err := d.Dir.Open(name)
 
 	// Check if requested file exists and if an extension was included
@@ -173,43 +174,51 @@ func (d spaRoot) Open(name string) (http.File, error) {
 }
 
 // http.ResponseWriter wrapper
-type resourceNotFoundResponseWriter struct {
+type notFoundResponseWriter struct {
 	http.ResponseWriter
 	status int
 }
 
-// Wrapper for the WriteHeader method of the embedded ResponseWriter
-func (w *resourceNotFoundResponseWriter) WriteHeader(status int) {
+// Wrapper for the WriteHeader method of notFoundResponseWriter's embedded ResponseWriter
+func (w *notFoundResponseWriter) WriteHeader(status int) {
+	// Save status for later use
 	w.status = status
 
-	// Write status unless status code is 404 - handle404 function will handle that
+	// Write header with status code unless status code is 404 - handle404 will write the header
 	if status != http.StatusNotFound {
 		w.ResponseWriter.WriteHeader(status)
 	}
 }
 
-// Wrapper for the Write method of the embedded ResponseWriter
-func (w *resourceNotFoundResponseWriter) Write(p []byte) (int, error) {
-	// Write response unless status code is 404 - handle404 function will handle that
+// Wrapper for the Write method of notFoundResponseWriter's embedded ResponseWriter
+func (w *notFoundResponseWriter) Write(p []byte) (int, error) {
+	// Write response unless status code is 404 - handle404 will write a custom response
 	if w.status != http.StatusNotFound {
 		return w.ResponseWriter.Write(p)
 	}
 
+	// Fake that a response was written
 	return len(p), nil
 }
 
-func wrapHandler(h http.Handler, root string) http.HandlerFunc {
+// Returns handler with middleware for intercepting 404 errors
+func notFoundHanlder(h http.Handler, root string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		writer := &resourceNotFoundResponseWriter{ResponseWriter: w}
+		// Create an instance of notFoundResponseWriter
+		writer := &notFoundResponseWriter{ResponseWriter: w}
 
+		// Pass control to next handler
 		h.ServeHTTP(writer, r)
 
+		// Check if status code is 404
 		if writer.status == http.StatusNotFound {
+			// Call handle404 to write custom response
 			handle404(w, root)
 		}
 	}
 }
 
+// Writes custom 404 response
 func handle404(w http.ResponseWriter, root string) {
 	// Set default response content
 	content := []byte(templates.ResourceNotFound)
@@ -217,6 +226,7 @@ func handle404(w http.ResponseWriter, root string) {
 	// Check if custom 404.html file exists
 	custom404Page := path.Join(root, "404.html")
 	if _, err := os.Stat(custom404Page); !os.IsNotExist(err) {
+		// Read 404.html file
 		content, err = ioutil.ReadFile(custom404Page)
 		if err != nil {
 			log.Fatal(err)
@@ -233,6 +243,7 @@ func handle404(w http.ResponseWriter, root string) {
 	w.Write(content)
 }
 
+// Launches a browser window to a specified url
 func openBrowser(url string) error {
 	var cmd string
 	var args []string
