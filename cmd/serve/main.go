@@ -124,7 +124,8 @@ func main() {
 		fs.ServeHTTP(w, r)
 	})
 
-	fmt.Printf("Serving %s at %s \n", dir, url)
+	// Print "Serving {directory} at {url}" message
+	fmt.Printf("\n\033[1;32m•\033[0m Serving \033[4m%s\033[0m at \033[4m%s\033[0m\n\n", dir, url)
 
 	// Start server
 	if secure {
