@@ -1,7 +1,7 @@
-package templates
+package main
 
-// ResourceNotFound : HTML template for default 404 response
-var ResourceNotFound = `
+// HTML template for default 404 response
+const resourceNotFoundTemplate = `
 <!DOCTYPE html>
 <html lang="en">
 <head>

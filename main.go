@@ -11,7 +11,6 @@ import (
 	"path"
 	"runtime"
 
-	"github.com/lukecjohnson/serve/templates"
 	flag "github.com/spf13/pflag"
 )
 
@@ -222,7 +221,7 @@ func notFoundHanlder(h http.Handler, root string) http.HandlerFunc {
 // Writes custom 404 response
 func handle404(w http.ResponseWriter, root string) {
 	// Set default response content
-	content := []byte(templates.ResourceNotFound)
+	content := []byte(resourceNotFoundTemplate)
 
 	// Check if custom 404.html file exists
 	custom404Page := path.Join(root, "404.html")
