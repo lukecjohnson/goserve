@@ -4,9 +4,9 @@ all: build-production package checksums
 
 build-production:
 	rm -rf build
-	GOOS=darwin GOARCH=amd64 go build -ldflags "-X main.currentVersion=$(VERSION) -s -w" -o build/serve-macos-64/bin/serve
-	GOOS=windows GOARCH=amd64 go build -ldflags "-X main.currentVersion=$(VERSION) -s -w" -o build/serve-windows-64/bin/serve.exe
-	GOOS=linux GOARCH=amd64 go build -ldflags "-X main.currentVersion=$(VERSION) -s -w" -o build/serve-linux-64/bin/serve
+	GOOS=darwin GOARCH=amd64 go build -ldflags "-X main.currentVersion=$(VERSION) -s -w" -o build/serve-macos-64/bin/serve ./cmd/serve
+	GOOS=windows GOARCH=amd64 go build -ldflags "-X main.currentVersion=$(VERSION) -s -w" -o build/serve-windows-64/bin/serve.exe ./cmd/serve
+	GOOS=linux GOARCH=amd64 go build -ldflags "-X main.currentVersion=$(VERSION) -s -w" -o build/serve-linux-64/bin/serve ./cmd/serve
 
 package:
 	rm -rf dist
