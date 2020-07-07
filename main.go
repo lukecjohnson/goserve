@@ -82,8 +82,16 @@ func main() {
 		}
 	}
 
+	// Check for single flag and set the http.FileSystem root with the appropriate wrapper
+	var root http.FileSystem
+	if *single {
+		root = spaRoot{http.Dir(dir)}
+	} else {
+		root = htmlRoot{http.Dir(dir)}
+	}
+
 	// Wrap file server in handler with custom 404 handling
-	fs := wrapHandler(http.FileServer(http.Dir(dir)), dir)
+	fs := wrapHandler(http.FileServer(root), dir)
 
 	// Register handler for all routes
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
@@ -99,16 +107,6 @@ func main() {
 			w.Header().Set("Cache-Control", "no-store")
 		}
 
-		if path.Ext(r.URL.Path) == "" {
-			if *single {
-				r.URL.Path = "/"
-			} else {
-				if _, err := os.Stat(dir + r.URL.Path); os.IsNotExist(err) {
-					r.URL.Path += ".html"
-				}
-			}
-		}
-
 		fs.ServeHTTP(w, r)
 	})
 
@@ -122,7 +120,46 @@ func main() {
 	}
 }
 
-// ResponseWriter wrapper
+// http.Dir wrapper for standard static sites
+type htmlRoot struct {
+	http.Dir
+}
+
+// Wrapper for the Open method of htmlRoot's embedded http.Dir to handle clean urls
+func (d htmlRoot) Open(name string) (http.File, error) {
+	// Requested file
+	f, err := d.Dir.Open(name)
+
+	// Check if requested file exists and if an extension was included
+	if os.IsNotExist(err) && path.Ext(name) == "" {
+		// Return file with .html extention if it exists
+		if f, err := d.Dir.Open(name + ".html"); err == nil {
+			return f, nil
+		}
+	}
+
+	// Return original requested file or error
+	return f, err
+}
+
+// http.Dir wrapper for single page applications
+type spaRoot struct {
+	http.Dir
+}
+
+// Wrapper for the Open method of spaRoot's embedded http.Dir to handle rewriting urls to index.html
+func (d spaRoot) Open(name string) (http.File, error) {
+	// Check that the requested file doesn't have an extension and isn't already index.html
+	if path.Ext(name) == "" && name != "/" {
+		// Return index.html instead of original requested file
+		return d.Dir.Open("/index.html")
+	}
+
+	// Return original requested file or error
+	return d.Dir.Open(name)
+}
+
+// http.ResponseWriter wrapper
 type resourceNotFoundResponseWriter struct {
 	http.ResponseWriter
 	status int
