@@ -8,7 +8,7 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
-	"path"
+	"path/filepath"
 	"runtime"
 
 	flag "github.com/spf13/pflag"
@@ -123,8 +123,15 @@ func main() {
 		fs.ServeHTTP(w, r)
 	})
 
+	// If dir is the current working directory, display the directory name instead of "."
+	displayDir := dir
+	if displayDir == "." {
+		wd, _ := os.Getwd()
+		displayDir = filepath.Base(wd)
+	}
+
 	// Print "Serving {directory} at {url}" message
-	fmt.Printf("\n\033[1;32m•\033[0m Serving \033[4m%s\033[0m at \033[4m%s\033[0m\n\n", dir, url)
+	fmt.Printf("\n\033[1;32m•\033[0m Serving \033[4m%s\033[0m at \033[4m%s\033[0m\n\n", displayDir, url)
 
 	// Start server
 	if secure {
@@ -145,7 +152,7 @@ func (d htmlRoot) Open(name string) (http.File, error) {
 	f, err := d.Dir.Open(name)
 
 	// Check if requested file exists and if an extension was included
-	if os.IsNotExist(err) && path.Ext(name) == "" {
+	if os.IsNotExist(err) && filepath.Ext(name) == "" {
 		// Return file with .html extention if it exists
 		if f, err := d.Dir.Open(name + ".html"); err == nil {
 			return f, nil
@@ -164,7 +171,7 @@ type spaRoot struct {
 // Wrapper for the Open method of spaRoot's embedded http.Dir to handle rewriting urls to index.html
 func (d spaRoot) Open(name string) (http.File, error) {
 	// Check that the requested file doesn't have an extension and isn't already index.html
-	if path.Ext(name) == "" && name != "/" {
+	if filepath.Ext(name) == "" && name != "/" {
 		// Return index.html instead of original requested file
 		return d.Dir.Open("/index.html")
 	}
@@ -224,7 +231,7 @@ func handle404(w http.ResponseWriter, root string) {
 	content := []byte(resourceNotFoundTemplate)
 
 	// Check if custom 404.html file exists
-	custom404Page := path.Join(root, "404.html")
+	custom404Page := filepath.Join(root, "404.html")
 	if _, err := os.Stat(custom404Page); !os.IsNotExist(err) {
 		// Read 404.html file
 		content, err = ioutil.ReadFile(custom404Page)
