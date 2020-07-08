@@ -3,7 +3,7 @@
 A quick, simple CLI for serving static sites and single page applications.
 
 ## Usage
-By default, `serve` will serve the current directory at `localhost:8080`
+By default, `serve` will serve the current directory at `localhost:8080`:
 ```
 $ serve
 ```
