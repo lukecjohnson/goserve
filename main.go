@@ -52,7 +52,7 @@ func main() {
 
 	// Check that no more than 1 argument was provided
 	if len(args) > 1 {
-		fmt.Println("Error: Please provide just one directory path")
+		printError("please provide just one directory path")
 		os.Exit(1)
 	}
 
@@ -63,7 +63,7 @@ func main() {
 
 		// Ensure that the provided directory exists
 		if _, err := os.Stat(dir); os.IsNotExist(err) {
-			fmt.Println("Error: The provided directory could not be found")
+			printError("the provided directory could not be found")
 			os.Exit(1)
 		}
 	}
@@ -89,7 +89,7 @@ func main() {
 	// Check for --open flag (open browser window)
 	if *open {
 		if err := openBrowser(url); err != nil {
-			fmt.Println(err)
+			printError("unable to open browser: " + err.Error())
 			os.Exit(1)
 		}
 	}
@@ -264,7 +264,7 @@ func openBrowser(url string) error {
 	} else if runtime.GOOS == "linux" {
 		cmd = "xdg-open"
 	} else {
-		return errors.New("Error: Unsupported platform")
+		return errors.New("unsupported platform")
 	}
 
 	// Add url as the last argument
@@ -272,4 +272,9 @@ func openBrowser(url string) error {
 
 	// Execute command
 	return exec.Command(cmd, args...).Start()
+}
+
+// Prints formatted error message ("• Error: {message}")
+func printError(msg string) {
+	fmt.Printf("\n\033[1;31m•\033[0m Error: %s\n\n", msg)
 }
