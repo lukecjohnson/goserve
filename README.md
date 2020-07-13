@@ -13,6 +13,11 @@ A directory and additional options can be specified with `serve [directory] [opt
 $ serve public --port 5000 --single
 ```
 
+To enable HTTPS, a SSL certificate and key can be provided with the `--cert` and `--key` options:
+```
+$ serve public --cert certs/localhost.crt --key certs/localhost.key
+```
+
 To see a list of all available options:
 ```
 $ serve --help
